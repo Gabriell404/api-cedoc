@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\CaixaController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\PredioController;
+use App\Http\Controllers\RepactuacaoController;
 use App\Http\Controllers\TipoDocumentoController;
+use App\Http\Controllers\UnidadeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +24,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
 
-
+ // routes unidades
+ Route::get('/unidade', [UnidadeController::class, 'index'])->name('unidade.show');
+ 
 // routes tipoDocumento
 Route::get('/tipo-documento', [TipoDocumentoController::class, 'index'])->name('tipo-documento.show');
 Route::get('/tipo-documento/{id}', [TipoDocumentoController::class, 'show'])->name('tipo-documento.detalhes');
@@ -29,7 +36,11 @@ Route::post('/tipo-documento', [TipoDocumentoController::class, 'store'])->name(
 
 // routes documento
 Route::get('/documento', [DocumentoController::class, 'index'])->name('documento.show');
-
+Route::get('/documento/espaco-disponivel', [DocumentoController::class, 'buscar_enderecamento'])->name('documento.espaco_disponivel');
+Route::get('/documento/proximo-endereco', [DocumentoController::class, 'proximo_endereco'])->name('documento.proximo_endereco');
+Route::get('/documento/enderecar/filtro', [DocumentoController::class, 'filtro'])->name('documento.filtro');
+Route::post('/documento/enderecar', [DocumentoController::class, 'salvar_enderecamento'])->name('documento.salvar_enderecamento');
+Route::get('/documento/{id}', [DocumentoController::class, 'show'])->name('documento.detalhes');
 Route::post('/documento/importar', [DocumentoController::class, 'importar'])->name('documento.importar');
 Route::post('/documento/importar/novos', [DocumentoController::class, 'importar_novos'])->name('documento.importar_novos');
 Route::get('/documento/importar/progress', [DocumentoController::class, 'progress_batch'])->name('documento.importar.progress');
@@ -38,6 +49,25 @@ Route::get('/documento/importar/now/{id}', [DocumentoController::class, 'buscar_
 Route::post('/documento/espaco-ocupado/{id}', [DocumentoController::class, 'espaco_ocupado'])->name('documento.editar.espaco_ocupado');
 Route::patch('/documento/tipo-documento/{id}', [DocumentoController::class, 'alterar_tipo_documental'])->name('documento.editar.tipo_documental');
 
+
+ // routes caixas
+ Route::get('/caixa', [CaixaController::class, 'index'])->name('caixa.show');
+ Route::get('/caixa/{id}', [CaixaController::class, 'show'])->name('caixa.detalhes');
+ Route::put('/caixa/{id}', [CaixaController::class, 'update'])->name('caixa.update');
+ Route::delete('/caixa/{id}', [CaixaController::class, 'destroy'])->name('caixa.destroy');
+ Route::post('/caixa', [CaixaController::class, 'store'])->name('caixa.store');
+
+ // routes para repactuação
+ Route::put('/repactuar/fila/{id}', [RepactuacaoController::class, 'salvar_fila_repactuacao'])->name('repactuacao.salvar_fila_repactuacao');
+ Route::get('/repactuar/fila', [RepactuacaoController::class, 'fila'])->name('repactuacao.fila');
+ Route::post('/repactuar/enderecar', [RepactuacaoController::class, 'enderecar'])->name('repactuacao.enderecar');
+ Route::get('/repactuar/lista', [RepactuacaoController::class, 'lista'])->name('repactuacao.lista');
+ Route::put('/repactuar/fila/deletar/{id}', [RepactuacaoController::class, 'remover_fila_repactuacao'])->name('repactuacao.remover_fila_repactuacao');
+
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+// ruoutes predios
+Route::get('/predios/disponiveis', [PredioController::class, 'disponiveis'])->name('predios.disponiveis');
 
 });
 

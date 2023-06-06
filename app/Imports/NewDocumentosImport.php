@@ -95,7 +95,8 @@ class NewDocumentosImport implements ToCollection, WithHeadingRow, ShouldQueue, 
                     'nome_cooperado' => $row['cliente'],
                     'vencimento_operacao' => $row['vencimento'] !== "00/01/1900" ? Carbon::createFromFormat('d/m/Y', $row['vencimento']) : null,
                     'valor_operacao' => $row['vlr_operacao'] ?? null,
-                    'status' => TipoDocumento::find($row['tipo_documental'])->digital === 1 ? 'arquivado': 'alocar'
+                    'status' => TipoDocumento::find($row['tipo_documental'])->digital === 1 ? 'arquivado': 'alocar',
+                    'user_id' => $this->user
                 ],
             );
 

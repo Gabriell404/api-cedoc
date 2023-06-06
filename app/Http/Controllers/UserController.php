@@ -100,5 +100,18 @@ class UserController extends Controller
 
     }
 
+
+    public function logout(Request $request)
+    {
+        Auth::user()->tokens()->delete();
+        // Google2FA::logout();
+        Session::flush();
+
+        return response()->json([
+            'error' => false,
+           'message' => 'Usuário deslogado com sucesso'
+        ], 200);
+    }
+
     
 }

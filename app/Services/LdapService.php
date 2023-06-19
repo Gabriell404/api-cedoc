@@ -20,7 +20,7 @@ Class LdapService{
             'hosts' => ['10.54.56.8'],
             'base_dn'=> 'DC=aracoop,DC=local',
             'username' => 'ARACOOP\Administrator',
-            'password' => 'Araco0p@4264',
+            'password' => 'Psw@4264#ti',
             'port' => 389,
         ]);
 

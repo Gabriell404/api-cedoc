@@ -48,4 +48,17 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
         });
     }
+    /**
+     * Determine if the exception handler response should be JSON.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return bool
+     */
+    protected function shouldReturnJson($request, Throwable $e)
+    {
+        return true;
+    }
+
+
 }

@@ -2,20 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Usuario\UsuarioUsuarioCollectionResource;
+use App\Http\Services\UsuarioService;
+use App\Models\Perfil;
 use App\Models\User;
 use App\Services\LdapService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Google2FA;
+use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FALaravel\Support\Authenticator;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected UsuarioService $usuarioService
+    )
+    {
+
+    }
     public function login(Request $request)
     {
+
         try{
 
             $validator = Validator::make($request->all(), [
@@ -43,11 +55,19 @@ class UserController extends Controller
                 'email' => $request->get('email'),
             ], [
                 'name' => $result['user'],
+                'last_login' => now()
             ]);
 
             Auth::login($user);
+            Auth::user()->update([
+                'last_login' => Carbon::now()->toDateTimeString(),
+                'ip_login' => $request->getClientIp()
+            ]);
 
-            $loginSecurity = $user->loginSecurity()->exists() ? $user->loginSecurity->google2fa_enable : false;
+            $loginSecurity = $user->loginSecurity()->exists() ? $user->loginSecurity->google2fa_enable : null;
+            $roles = $user->perfils[0]->permissoes->map(function($permissao){
+                return $permissao->nome;
+            });
 
             return response()->json([
                 'error' => false,
@@ -57,9 +77,11 @@ class UserController extends Controller
                     'email' => $user->email,
                     'id' => $user->id,
                     'description' => $result['description'],
-                    'doisFatores' => boolval($loginSecurity)
+                    'doisFatores' => boolval($loginSecurity),
+                    'roles' => $roles,
+                    'admin' => $user->existeAdmin()
                 ],
-                'token' => $user->createToken($user->name, ['server:create', 'server:update'])->plainTextToken
+                'token' => $user->createToken($user->name, count($roles) === 0 ? ['isadmin'] : $roles->toArray())->plainTextToken
             ], 200);
 
         }catch (\Throwable $th) {
@@ -113,5 +135,90 @@ class UserController extends Controller
         ], 200);
     }
 
-    
+    /**
+     * Função para listar os usuários do sistema
+     *
+     *
+     */
+    public function listar(Request $request)
+    {
+        try{
+
+            $usuarios = $this->usuarioService->listar();
+
+            return new UsuarioUsuarioCollectionResource($usuarios);
+
+        }catch(Exception $e){
+
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage()
+            ], 500);
+
+        }
+    }
+
+    /**
+     * Função para adicionar um novo Perfil ao usuário
+     * @param Request $request
+     * @param int|string $id
+     *
+     *
+     */
+    public function salvarPerfil(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $usuario = $this->usuarioService->findById($id);
+            $perfil = Perfil::findOrFail($request->get('perfil'));
+
+            $usuario->adicionaPerfil($perfil);
+
+            DB::commit();
+
+            return response()->json([
+               'error' => false,
+               'message' => 'Perfil adicionado com sucesso'
+            ], 200);
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json([
+                'error' => true,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Função para desabilitar o login seguro com 2 fator de autenticação
+     *
+     * @param number|string $id
+     */
+     public function disableLogin(int|string $id)
+     {
+        try{
+
+            DB::beginTransaction();
+
+            $usuario = $this->usuarioService->findById($id);
+
+            $usuario->loginSecurity->google2fa_enable = 0;
+            $usuario->push();
+
+            DB::commit();
+
+            return response(null, 200);
+
+        }catch(Exception $e){
+            DB::rollBack();
+
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+     }
+
 }

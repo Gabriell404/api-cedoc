@@ -51,13 +51,13 @@ class DocumentoController extends Controller
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
-     * 
+     *
      */
     public function index(Request $request)
     {
         try {
 
-            $query = $this->documento->with(['tipoDocumento', 'caixa.predio', 'usuario'])
+            $query = $this->documento->with(['tipoDocumento', 'caixa.predio', 'usuario', 'repactuacao'])
             ->withCount('repactuacoes')
             ->when($request->get('documento'), function ($query) use ($request) {
                 return $query->where('documento', '=', $request->get('documento'));
@@ -242,7 +242,7 @@ class DocumentoController extends Controller
 
     }
 
-    
+
 
      /**
      * Display the specified resource.
@@ -514,5 +514,35 @@ class DocumentoController extends Controller
             return ResponseService::exception('documento.editar.espaco_ocupado', null, $e);
         }
     }
-    
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response|\Illuminate\Contracts\Routing\ResponseFactory
+     */
+    public function criarNovaCaixa()
+    {
+        try {
+
+            DB::beginTransaction();
+
+            $caixa = $this->documentoService->criarNovaCaixa();
+
+            DB::commit();
+
+            return response()->json([
+                'error' => false,
+                'message' => "Caixa criada com sucesso",
+                'caixa' => $caixa
+            ], 200);
+
+        } catch (\Throwable|\Exception $e) {
+
+            DB::rollBack();
+
+            return ResponseService::exception('caixa.criar', null, $e);
+        }
+    }
+
 }

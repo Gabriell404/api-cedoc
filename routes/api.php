@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\CaixaController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\PredioController;
 use App\Http\Controllers\RepactuacaoController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TipoDocumentoController;
 use App\Http\Controllers\UnidadeController;
 use App\Http\Controllers\UserController;
@@ -26,7 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
  // routes unidades
  Route::get('/unidade', [UnidadeController::class, 'index'])->name('unidade.show');
- 
+
 // routes tipoDocumento
 Route::get('/tipo-documento', [TipoDocumentoController::class, 'index'])->name('tipo-documento.show');
 Route::get('/tipo-documento/{id}', [TipoDocumentoController::class, 'show'])->name('tipo-documento.detalhes');
@@ -55,7 +57,7 @@ Route::patch('/documento/tipo-documento/{id}', [DocumentoController::class, 'alt
  Route::get('/caixa/{id}', [CaixaController::class, 'show'])->name('caixa.detalhes');
  Route::put('/caixa/{id}', [CaixaController::class, 'update'])->name('caixa.update');
  Route::delete('/caixa/{id}', [CaixaController::class, 'destroy'])->name('caixa.destroy');
- Route::post('/caixa', [CaixaController::class, 'store'])->name('caixa.store');
+ Route::post('/caixa', [DocumentoController::class, 'criarNovaCaixa'])->name('caixa.criar');
 
  // routes para repactuação
  Route::put('/repactuar/fila/{id}', [RepactuacaoController::class, 'salvar_fila_repactuacao'])->name('repactuacao.salvar_fila_repactuacao');
@@ -68,6 +70,21 @@ Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
 // ruoutes predios
 Route::get('/predios/disponiveis', [PredioController::class, 'disponiveis'])->name('predios.disponiveis');
+
+//routes usuarios
+Route::get('/usuario', [UserController::class, 'listar'])->name('usuario.listar');
+Route::post('/usuario/perfil/{id}', [UserController::class, 'salvarPerfil'])->name('usuario.perfil');
+Route::patch('/usuario/disable-login/{id}', [UserController::class, 'disableLogin'])->name('usuario.disable.login');
+
+//routes roles
+Route::get('/roles', [RoleController::class, 'listar'])->name('roles.listar');
+
+//routes perfil
+Route::get('/perfil', [PerfilController::class, 'listar'])->name('perfil.listar');
+Route::get('/perfil/permissao/{id}', [PerfilController::class, 'listarPermissao'])->name('perfil.listar.permissao');
+Route::post('/perfil', [PerfilController::class, 'criar'])->name('perfil.criar');
+Route::post('/perfil/{id}', [PerfilController::class, 'permissao'])->name('perfil.permissao');
+
 
 });
 

@@ -38,7 +38,7 @@ class DocumentoService {
         } catch (\Throwable $th) {
             throw $th;
         }
-        
+
     }
 
     /**
@@ -52,25 +52,25 @@ class DocumentoService {
              //total de caixas por predio - considerando ultima caixa recomendada pelo sistema
             $espaco_predio = DB::select(
             'SELECT
-    
+
             COUNT(c.id) as total_caixas, SUM(c.espaco_disponivel) as espaco_disponivel_total, p.id as predio_id
-    
+
             from predios p
-    
+
             join caixas c on c.predio_id = p.id
-    
+
             where p.id = :predio_id
-    
+
             order by c.id desc',
             [
                 ':predio_id' => $ultima_caixa->predio_id
             ])[0];
-    
+
             return $espaco_predio;
         } catch (\Throwable $th) {
             throw $th;
         }
-       
+
     }
 
     public function prediosDisponiveis()
@@ -80,17 +80,17 @@ class DocumentoService {
                 'SELECT
                     predios.id as predio_id
                 FROM predios
-    
+
                 JOIN caixas on caixas.predio_id = predios.id
-    
+
                 WHERE caixas.espaco_disponivel > 0
-    
+
                 GROUP BY predio_id'
             );
         } catch (\Throwable $th) {
             throw $th;
         }
-        
+
     }
 
     /**
@@ -134,7 +134,7 @@ class DocumentoService {
         } catch (\Throwable $th) {
             throw $th;
         }
-       
+
     }
 
     public function create(
@@ -197,7 +197,7 @@ class DocumentoService {
         int|string $andar_id
     ) : Documento
     {
-       
+
 
         if($documento->status === 'arquivado'){
             throw new \Error('O documento já está endereçado', 404);
@@ -228,7 +228,7 @@ class DocumentoService {
             'Registro manual de arquivamento'
         );
 
-     
+
 
         return $documento;
     }
@@ -301,5 +301,33 @@ class DocumentoService {
         return $documento->update([
             'espaco_ocupado' => $espaco_ocupado
         ]);
+    }
+
+        /**
+     * Função para criar uma nova caixa
+     *
+     */
+    public function criarNovaCaixa(): Caixa
+    {
+        try{
+            $ultimaCaixa = $this->caixaService->ultimaCaixa();
+            $espacoPredio = $this->espacoDisponivelPredio($ultimaCaixa);
+            $predioId = (int) ($espacoPredio->total_caixas == 63 ? Unidade::getIdPredio($ultimaCaixa->predio_id++) : $ultimaCaixa->predio_id);
+            $andar = ($espacoPredio->total_caixas == 63 ? 1 : Unidade::localizacaoAndar($espacoPredio->total_caixas));
+
+            $caixa = Caixa::create([
+                'numero' => (int) ++$ultimaCaixa->numero,
+                'espaco_total' => 13,
+                'espaco_ocupado' => 0,
+                'espaco_disponivel' => 13,
+                'predio_id' => $predioId,
+                'andar_id' => $andar,
+            ]);
+
+            return $caixa;
+
+        }catch(Exception $e){
+            throw $e;
+        }
     }
 }

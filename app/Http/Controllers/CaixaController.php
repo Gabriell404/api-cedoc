@@ -177,4 +177,5 @@ class CaixaController extends Controller
             return ResponseService::exception('caixa.destroy', $id, $e);
         }
     }
+
 }

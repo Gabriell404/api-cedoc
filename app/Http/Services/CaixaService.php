@@ -3,6 +3,8 @@
 namespace App\Http\Services;
 
 use App\Models\Caixa;
+use App\Models\Unidade;
+use Exception;
 
 class CaixaService {
 

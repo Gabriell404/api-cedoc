@@ -173,6 +173,9 @@ class RepactuacaoController extends Controller
      public function enderecar(Request $request)
      {
         try {
+            //iniciar um transação de dados
+            DB::beginTransaction();
+
             //receber parametros
             $andar_id = $request->get('andar_id');
             $espaco_ocupado = $request->get('espaco_ocupado');
@@ -183,10 +186,10 @@ class RepactuacaoController extends Controller
             $documento_pai_id = (int) $request->get('documento_pai_id');
 
             $predio_id =  (int) Unidade::getIdPredio(
-                is_null($request->get('predio_id')) ? $proximo_endereco->predio_id : $request->get('predio_id')
+                $request->get('predio_id')
             );
 
-            $ordem = Documento::ordem(is_null($numero_caixa) ? $proximo_endereco->caixa_id : $numero_caixa);
+            $ordem = Documento::ordem($numero_caixa);
 
             $this->repactuacaoService->enderecar(
                 $documentos,
@@ -199,12 +202,16 @@ class RepactuacaoController extends Controller
                 $documento_pai_id
             );
 
+            DB::commit();
+
             return response()->json([
                 'error' => false,
                 'msg' => 'Documentos endereçados com sucesso'
             ], 200);
 
         } catch (\Exception $e) {
+
+            DB::rollback();
 
             return response()->json([
                 'error' => true,

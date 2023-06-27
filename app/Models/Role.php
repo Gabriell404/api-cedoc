@@ -19,9 +19,11 @@ class Role extends Model
         'descricao',
     ];
 
-    public function papeis(){
-
+    public function papeis()
+    {
         return $this->belongsToMany(Perfil::class);
     }
+
+
 
 }

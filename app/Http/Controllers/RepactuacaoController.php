@@ -177,7 +177,6 @@ class RepactuacaoController extends Controller
             DB::beginTransaction();
 
             //receber parametros
-            $andar_id = $request->get('andar_id');
             $espaco_ocupado = $request->get('espaco_ocupado');
             $numero_caixa = $request->get('numero_caixa');
             $observacao = $request->get('observacao');
@@ -198,7 +197,6 @@ class RepactuacaoController extends Controller
                 $observacao,
                 $ordem,
                 $predio_id,
-                $andar_id,
                 $documento_pai_id
             );
 

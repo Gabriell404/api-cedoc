@@ -11,6 +11,7 @@ use App\Http\Resources\ImportacaoResource;
 use App\Http\Services\CaixaService;
 use App\Http\Services\TipoDocumentoService;
 use App\Http\Services\DocumentoService;
+use App\Http\Services\UsuarioService;
 use App\Imports\NewDocumentosImport;
 use App\Jobs\ProcessImportDossie;
 use App\Models\Caixa;
@@ -21,6 +22,7 @@ use App\Services\RastreabilidadeService;
 use App\Services\ResponseService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -42,6 +44,7 @@ class DocumentoController extends Controller
         protected DocumentoService $documentoService,
         protected TipoDocumentoService $tipoDocumentoService,
         protected RastreabilidadeService $rastreabilidadeService,
+        protected UsuarioService $usuarioService
     )
     {
         $this->documento = $documento;
@@ -55,6 +58,10 @@ class DocumentoController extends Controller
      */
     public function index(Request $request)
     {
+        if(!$request->user()->tokenCan('dossie.listar') && !$request->user()->tokenCan('isadmin')){
+            abort(403, "Você não possui permissão para realizar a ação: {$this->usuarioService->getRole('dossie.listar')}");
+        };
+
         try {
 
             $query = $this->documento->with(['tipoDocumento', 'caixa.predio', 'usuario', 'repactuacao'])
@@ -75,6 +82,13 @@ class DocumentoController extends Controller
                     return $query;
                 }
                 return $query->where('status', $request->get('status'));
+            }, function ($query) use ($request) {
+                if($request->get('caixa')){
+                    return $query->whereHas('repactuacoes', function(Builder $query) use ($request) {
+                        $query->whereRelation('aditivo', 'caixa_id', $request->get('caixa'));
+                    })->orWhereNotIn('status', ['repactuacao']);
+                }
+                return $query->whereHas('repactuacoes',)->orWhereNotIn('status', ['repactuacao']);
             })->when($request->get('predio_id'), function ($query) use ($request) {
                 $query->where('predio_id', '=', $request->get('predio_id'));
             })->when($request->get('tipo_documento_id'), function ($query) use ($request) {
@@ -91,9 +105,9 @@ class DocumentoController extends Controller
             })
             ->when($request->get('page'), function ($query) use($request){
                 if($request->get('page') < 0){
-                    return $query->get();
+                    return $query->dd();
                 }
-                return $query->paginate(10);
+                return $query->dd();
             });
 
             return new DocumentoCollectionResource($query);
@@ -250,8 +264,12 @@ class DocumentoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        if(!$request->user()->tokenCan('dossie.detalhar') && !$request->user()->tokenCan('isadmin')){
+            abort(403, "Você não possui permissão para realizar a ação");
+        };
+
         try {
 
             $documento = $this->documento
@@ -361,6 +379,10 @@ class DocumentoController extends Controller
      */
     public function salvar_enderecamento(Request $request)
     {
+        if(!$request->user()->tokenCan('dossie.criar') && !$request->user()->tokenCan('isadmin')){
+            abort(403, "Você não possui permissão para realizar a ação: {$this->usuarioService->getRole('dossie.criar')}");
+        };
+
         try {
             //iniciar um transação de dados
             DB::beginTransaction();

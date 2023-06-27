@@ -14,6 +14,7 @@ use App\Models\Documento;
 use App\Models\Repactuacao;
 use App\Http\Services\CaixaService;
 use App\Http\Services\DocumentoService;
+use App\Models\Caixa;
 use App\Services\RastreabilidadeService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -141,7 +142,6 @@ class RepactuacaoService {
         string|null $observacao,
         string $ordem,
         int $predio_id,
-        int $andar_id,
         int $documento_pai_id,
      )
      {
@@ -248,7 +248,7 @@ class RepactuacaoService {
                 $caixa_id,
                 $calculaEspaco,
                 $predio_id,
-                $andar_id,
+                Caixa::find($caixa_id)->andar_id,
                 'entrada'
             );
 

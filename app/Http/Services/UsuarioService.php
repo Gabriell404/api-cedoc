@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -25,6 +26,15 @@ class UsuarioService {
     public function findById(int $id)
     {
         return User::findOrFail($id);
+    }
+
+    /**
+     * Função para retornar descrição de uma regra
+     * @param string $role
+     * @return string
+     */
+    public function getRole(string $role): string {
+        return Role::where('nome', $role)->first()->descricao;
     }
 
 }

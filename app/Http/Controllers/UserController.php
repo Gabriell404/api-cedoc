@@ -159,7 +159,7 @@ class UserController extends Controller
     }
 
     /**
-     * Função para adicionar um novo Perfil ao usuário
+     * Função para adicionar ou atualizar Perfil do usuário
      * @param Request $request
      * @param int|string $id
      *
@@ -171,6 +171,13 @@ class UserController extends Controller
             DB::beginTransaction();
 
             $usuario = $this->usuarioService->findById($id);
+
+            if($usuario->perfils->count()){
+                $usuario->removePerfil(
+                    $usuario->perfils[0]
+                );
+            }
+
             $perfil = Perfil::findOrFail($request->get('perfil'));
 
             $usuario->adicionaPerfil($perfil);
@@ -179,7 +186,7 @@ class UserController extends Controller
 
             return response()->json([
                'error' => false,
-               'message' => 'Perfil adicionado com sucesso'
+               'message' => 'Perfil atualizado com sucesso'
             ], 200);
 
         } catch (\Throwable $th) {

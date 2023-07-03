@@ -51,7 +51,7 @@ class ImportacaoRequest extends FormRequest
                 'status' => false,
                 'errors' => $validator->errors(),
                 'url' => route('documento.importar_novos')
-            ], 403));
+            ], 404));
         }
 
     }

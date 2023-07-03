@@ -51,7 +51,7 @@ class TipoDocumentoUpdateRequest extends FormRequest
                 'status' => false,
                 'errors' => $validator->errors(),
                 'url' => route('tipo-documento.update')
-            ], 403));
+            ], 404));
         }
 
     }

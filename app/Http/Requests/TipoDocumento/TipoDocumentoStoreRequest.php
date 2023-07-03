@@ -51,7 +51,7 @@ class TipoDocumentoStoreRequest extends FormRequest
                 'status' => false,
                 'errors' => $validator->errors(),
                 'url' => route('tipo-documento.store')
-            ], 403));
+            ], 404));
         }
 
     }

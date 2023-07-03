@@ -77,7 +77,7 @@ Class ResponseService{
                 return response()->json([
                     'status' => false,
                     'statusCode' => 403,
-                    'error'  => $e->getMessage(),
+                    'message'  => $e->getMessage(),
                     'url'    => $id != null ? route($route, $id) : route($route)
                 ], 403);
                 break;
@@ -85,7 +85,7 @@ Class ResponseService{
                 return response()->json([
                     'status' => false,
                     'statusCode' => 404,
-                    'error'  => $e->getMessage(),
+                    'message'  => $e->getMessage(),
                     'url'    => $id != null ? route($route, $id) : route($route)
                 ], 404);
                 break;
@@ -101,7 +101,7 @@ Class ResponseService{
                 return response()->json([
                     'status' => false,
                     'statusCode' => 500,
-                    'error'  => 'Problema ao realizar a operação.',
+                    'message'  => 'Problema ao realizar a operação.',
                     'detalhes' => $e->getMessage(),
                     'url'    => $id != null ? route($route, $id) : route($route)
                 ], 500);

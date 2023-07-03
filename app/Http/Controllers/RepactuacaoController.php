@@ -25,6 +25,7 @@ use App\Models\Documento;
 use App\Models\Repactuacao;
 use App\Models\Unidade;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class RepactuacaoController extends Controller
@@ -181,8 +182,14 @@ class RepactuacaoController extends Controller
             $numero_caixa = $request->get('numero_caixa');
             $observacao = $request->get('observacao');
             $predio_id = $request->get('predio_id');
-            $documentos = $request->get('documentos');
+            $documentosOriginal = $request->get('documentos');
             $documento_pai_id = (int) $request->get('documento_pai_id');
+
+            $documentos = Arr::where($documentosOriginal, function(int $id) use ($documento_pai_id){
+                return $id != $documento_pai_id;
+            });
+
+            array_splice($documentos, 0, 0, [$documento_pai_id]);
 
             $predio_id =  (int) Unidade::getIdPredio(
                 $request->get('predio_id')

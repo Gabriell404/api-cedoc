@@ -169,6 +169,10 @@ class TipoDocumentoController extends Controller
                 throw new Exception('Nenhum registro encontrado.');
             }
 
+            if($tipoDocumento->documentos->count()){
+                throw new Exception('Você não pode excluir esse registro.');
+            }
+
             $tipoDocumento->delete();
 
             return ResponseService::default(['route' => 'tipo-documento.destroy', 'type' => 'destroy'], $id);

@@ -155,11 +155,12 @@ class DocumentoService {
                     ['tipo_documento_id', '=', $tipo_documento_id],
                     ['cpf_cooperado', '=', $cpf]
                 ],
-            )->count()){
-                throw new \Error('O documento já existe no sistema', 404);
-            }
+                )->count()){
+                    throw new \Error('O documento já existe no sistema', 404);
+                }
 
-            $documento = Documento::create([
+
+            return Documento::create([
                 'documento' => $documento,
                 'tipo_documento_id' => $tipo_documento_id,
                 'nome_cooperado' => $nome,
@@ -168,8 +169,6 @@ class DocumentoService {
                 'valor_operacao' => $valor ?? null,
                 'user_id' => $user_id,
             ]);
-
-            return $documento;
 
         }catch(Exception $e){
             throw new Exception($e->getMessage());

@@ -21,6 +21,7 @@ use App\Models\Unidade;
 use App\Services\RastreabilidadeService;
 use App\Services\ResponseService;
 use Carbon\Carbon;
+use Error;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -63,7 +64,6 @@ class DocumentoController extends Controller
         };
 
         try {
-
             $query = $this->documento->with(['tipoDocumento', 'caixa.predio', 'usuario', 'repactuacao'])
             ->withCount('repactuacoes')
             ->when($request->get('documento'), function ($query) use ($request) {
@@ -74,24 +74,17 @@ class DocumentoController extends Controller
             })
             ->when($request->get('status'), function ($query) use ($request) {
                 if(\is_array($request->get('status'))){
-                    if(in_array('repactuacao', $request->get('status'))){
-                        $status = Arr::where($request->get('status'), fn($value, $key) => $value !== 'repactuacao');
-                        return $query->whereHas('repactuacoes')->orWhereIn('status', $status);
-                    }
-                    $query->whereIn('status', $request->get('status'));
-                    return $query;
+                    return $query->whereIn('status', $request->get('status'));
                 }
                 return $query->where('status', $request->get('status'));
-            }, function ($query) use ($request) {
-                if($request->get('caixa')){
-                    return $query->whereHas('repactuacoes', function(Builder $query) use ($request) {
-                        $query->whereRelation('aditivo', 'caixa_id', $request->get('caixa'));
-                    })->orWhereNotIn('status', ['repactuacao']);
-                }
-                return $query->whereHas('repactuacoes',)->orWhereNotIn('status', ['repactuacao']);
+            }, function($query){
+                $query->whereNotIn('status', ['repactuacao_filho']);
             })->when($request->get('predio_id'), function ($query) use ($request) {
                 $query->where('predio_id', '=', $request->get('predio_id'));
             })->when($request->get('tipo_documento_id'), function ($query) use ($request) {
+                if(\is_array($request->get('tipo_documento_id'))){
+                    return $query->whereIn('tipo_documento_id', $request->get('tipo_documento_id'));
+                }
                 return $query->where('tipo_documento_id', '=', $request->get('tipo_documento_id'));
             })->when($request->get('caixa'), function ($query) use ($request) {
                 return $query->where('caixa_id', '=', $request->get('caixa'));
@@ -103,11 +96,12 @@ class DocumentoController extends Controller
             }, function ($query) use ($request) {
                 return $query->orderBy('ordem');
             })
+            ->whereNot('status', 'repactuacao_filho')
             ->when($request->get('page'), function ($query) use($request){
                 if($request->get('page') < 0){
-                    return $query->dd();
+                    return $query->get();
                 }
-                return $query->dd();
+                return $query->paginate(10);
             });
 
             return new DocumentoCollectionResource($query);
@@ -442,6 +436,9 @@ class DocumentoController extends Controller
                 is_null($andar_id) ? $proximo_endereco->andar_id : Caixa::find($numero_caixa)->andar_id,
             );
 
+            //comit de trsanações
+            DB::commit();
+
             return response()->json([
                 'status' => true,
                 'msg' => 'Documento salvo com sucesso!',
@@ -452,9 +449,6 @@ class DocumentoController extends Controller
                     'caixa' => is_null($numero_caixa) ? $proximo_endereco->caixa_id : $numero_caixa
                 ]
             ], 200);
-
-            //comit de trsanações
-            DB::commit();
 
         } catch (\Throwable|Exception $e) {
 
@@ -494,8 +488,12 @@ class DocumentoController extends Controller
     {
         try {
 
+            if(is_null($id) || is_null($request->get('tipo_documento_id'))) throw new Exception("Informe o tipo documental", 404);
+
             $documento = $this->documentoService->findById($id);
             $tipoDocumento = $this->tipoDocumentoService->findById($request->get('tipo_documento_id'));
+
+            if($tipoDocumento->digital == 0) throw new Exception("Tipo documento selecionado não é digital", 404);
 
             $this->documentoService->alterar_tipo_documental(
                 $documento,

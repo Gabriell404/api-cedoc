@@ -51,7 +51,7 @@ class CaixaStoreRequest extends FormRequest
                 'status' => false,
                 'errors' => $validator->errors(),
                 'url' => route('unidade.store')
-            ], 403));
+            ], 404));
         }
 
     }

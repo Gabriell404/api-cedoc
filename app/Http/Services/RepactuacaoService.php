@@ -147,15 +147,13 @@ class RepactuacaoService {
      {
 
         try {
-            DB::beginTransaction();
-
             //variabel para calcular espaço dos documentos
             $calculaEspaco = 0;
 
             foreach ($documentos as $doc) {
 
                 //buscar documento
-                $documento = $this->documentoService->findById($doc['id']);
+                $documento = $this->documentoService->findById($doc);
 
 
                 //descrição documento
@@ -184,7 +182,7 @@ class RepactuacaoService {
                         $repac_filho->documento->caixa_id = $caixa_id;
                         $repac_filho->documento->predio_id = $predio_id;
                         $repac_filho->documento->ordem = (int) $ordem;
-                        $repac_filho->documento->status = 'repactuacao';
+                        $repac_filho->documento->status = $documento_pai_id == $repac_filho->documento->id ? 'repactuacao' : 'repactuacao_filho';
                         $calculaEspaco += $repac_filho->documento->espaco_ocupado;
 
                         $this->rastreabilidadeService->create(
@@ -206,7 +204,7 @@ class RepactuacaoService {
                         }
 
                         //atualizar o relacionamento com os filhos
-                        $repac_filho->pushQuietly();
+                        $repac_filho->push();
                     }
 
                     //proximo loop
@@ -235,7 +233,7 @@ class RepactuacaoService {
                 // documentos sem repactuações
                 $documento->update([
                     'espaco_ocupado' => $documento->espaco_ocupado,
-                    'status' => 'repactuacao',
+                    'status' => $documento->id == $documento_pai_id ? 'repactuacao' : 'repactuacao_filho',
                     'caixa_id' => $caixa_id,
                     'predio_id' => $predio_id,
                     'observacao' => $concatObservacao,
@@ -252,10 +250,7 @@ class RepactuacaoService {
                 'entrada'
             );
 
-            DB::commit();
-
         } catch (\Throwable $th) {
-            DB::rollback();
             throw $th;
         }
      }

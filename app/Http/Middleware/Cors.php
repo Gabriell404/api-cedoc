@@ -17,14 +17,14 @@ class Cors
     public function handle(Request $request, Closure $next)
     {
         if($request->isMethod('OPTIONS')){
-            $response = response('', 200);
+            return response('', 200, [
+                'Access-Control-Allow-Methods' => 'HEAD, GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                'Access-Control-Allow-Origin' => ['http://10.54.56.99:5173'],
+                'Access-Control-Allow-Headers' => 'authorization, content-type',
+                'Access-Control-Allow-Credentials' => 'true'
+            ]);
         }else{
-            $response = next($request);
+           return $next($request);
         }
-
-        $response->header('Access-Control-Allow-Methods', 'HEAD, GET, POST, PUT, PATCH, DELETE');
-        $response->header('Access-Control-Allow-Headers', $request->header('Access-Control-Request-Headers'));
-
-        return $response;
     }
 }
